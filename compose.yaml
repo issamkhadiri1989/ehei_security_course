@@ -1,0 +1,84 @@
+services:
+    # Webserver. Accessible with http://localhost
+    nginx_webserver:
+        build:
+            context: ./infra/
+            args:
+                BUILD_ARGUMENT_ENV: dev
+            dockerfile: ./nginx/Dockerfile
+        restart: always
+        ports:
+            - "80:80" # if you have issues with port 80, change the value of the port "<some port>:80"
+            - "443:443"
+        volumes:
+            - ./project:/var/www/html:ro,cached
+            - ./infra/nginx/conf.d:/etc/nginx/conf.d
+        depends_on:
+            - php
+        networks:
+            - internal_network
+
+    # Container that contains the source code
+    php:
+        build:
+            context: ./infra/
+            dockerfile: ./php/Dockerfile
+        volumes:
+            - ./project:/var/www/html:cached
+            - ./infra/php/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf
+            - ./infra/php/config/php.ini:/usr/local/etc/php/php.ini
+            - ./infra/php/xdebug/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+        depends_on:
+            - database
+        networks:
+            - internal_network
+        expose:
+            - "9000"
+            - "9003"
+
+    # Database server
+    database:
+        image: mysql
+        platform: linux/x86_64
+        command: --innodb-use-native-aio=${INNODB_USE_NATIVE_AIO:-1} --sql_mode=${SQL_MODE:-"ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"}
+        environment:
+            MYSQL_ROOT_PASSWORD: secret
+            MYSQL_DATABASE: app
+        ports:
+            - "33060:3306"
+        volumes:
+            - mysql_user:/var/lib/mysql:delegated
+        networks:
+            - internal_network
+
+    # PhpMyAdmin for database administration. Accessible with http://localhost:9002
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin:5
+        environment:
+            PMA_HOST: database
+        ports:
+            - "9002:80"
+        depends_on:
+            - database
+        networks:
+            - internal_network
+        volumes:
+            - db_admin_data:/var/www/html
+
+    # local SMTP server for emailing. The UI interface is accessible with http://localhost:1080.
+    # To send email using SMTP, use the port 1025
+    mailcatcher:
+        networks:
+            - internal_network
+        image: yappabe/mailcatcher
+        ports:
+            - 1025:1025
+            - 1080:1080
+volumes:
+    db_admin_data:
+    mysql:
+    mysql_user:
+
+networks:
+    internal_network:
+        name: internal_network
