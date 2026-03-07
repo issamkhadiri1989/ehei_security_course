@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <fieldset>
+        <legend>Create new account: </legend>
+        {{ form_start(registration_form) }}
+        {{ form_row(registration_form) }}
+        <button type="submit">
+            Register
+        </button>
+        {{ form_end(registration_form) }}
+    </fieldset>
+{% endblock %}

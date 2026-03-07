@@ -18,6 +18,8 @@ clear: down
 	docker builder prune
 	docker image prune
 	docker container prune
+	docker volume prune
+	docker network prune
 
 up:
 	docker compose up -d
@@ -36,8 +38,16 @@ restart: stop start
 install:
 	docker compose exec php composer install
 	docker compose exec php chmod -R 777 .
-	docker compose exec php php bin/console doctrine:database:create
 	docker compose exec php sh -c "cp .php-cs-fixer.dist.php .php-cs-fixer.php"
+
+create-database:
+	docker compose exec php php bin/console doctrine:database:create
+
+drop-database:
+	docker compose exec php php bin/console doctrine:database:drop --force
+
+migrate-database:
+	docker compose exec php php bin/console doctrine:migrations:migrate
 
 fix:
 	docker compose exec php ./vendor/bin/php-cs-fixer fix src --allow-risky=yes
