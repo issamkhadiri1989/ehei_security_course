@@ -40,4 +40,4 @@ install:
 	docker compose exec php sh -c "cp .php-cs-fixer.dist.php .php-cs-fixer.php"
 
 fix:
-	docker compose exec php ./vendor/bin/php-cs-fixer fix src
+	docker compose exec php ./vendor/bin/php-cs-fixer fix src --allow-risky=yes
