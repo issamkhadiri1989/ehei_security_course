@@ -37,7 +37,7 @@ install:
 	docker compose exec php composer install
 	docker compose exec php chmod -R 777 .
 	docker compose exec php php bin/console doctrine:database:create
-	docker compose exec php sh -c "rm .php-cs-fixer.php && cp .php-cs-fixer.dist.php .php-cs-fixer.php"
+	docker compose exec php sh -c "cp .php-cs-fixer.dist.php .php-cs-fixer.php"
 
 fix:
 	docker compose exec php ./vendor/bin/php-cs-fixer fix src
