@@ -1,40 +1,16 @@
 services:
-    # Webserver. Accessible with http://localhost
-    nginx_webserver:
+    # FrankenPHP
+    franken_php:
         build:
             context: ./infra/
-            args:
-                BUILD_ARGUMENT_ENV: dev
-            dockerfile: ./nginx/Dockerfile
-        restart: always
+            dockerfile: ./frankenphp/Dockerfile
+        volumes:
+            - ./project:/app
         ports:
-            - "80:80" # if you have issues with port 80, change the value of the port "<some port>:80"
+            - "80:80"
             - "443:443"
-        volumes:
-            - ./project:/var/www/html:ro,cached
-            - ./infra/nginx/conf.d:/etc/nginx/conf.d
-        depends_on:
-            - php
         networks:
             - internal_network
-
-    # Container that contains the source code
-    php:
-        build:
-            context: ./infra/
-            dockerfile: ./php/Dockerfile
-        volumes:
-            - ./project:/var/www/html:cached
-            - ./infra/php/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf
-            - ./infra/php/config/php.ini:/usr/local/etc/php/php.ini
-            - ./infra/php/xdebug/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
-        depends_on:
-            - database
-        networks:
-            - internal_network
-        expose:
-            - "9000"
-            - "9003"
 
     # Database server
     database:
@@ -72,8 +48,8 @@ services:
             - internal_network
         image: yappabe/mailcatcher
         ports:
-            - 1025:1025
-            - 1080:1080
+            - '1025:1025'
+            - '1080:1080'
 volumes:
     db_admin_data:
     mysql:

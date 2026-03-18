@@ -1,3 +1,5 @@
+PHP=franken_php
+
 start:
 	docker compose up -d --no-recreate --remove-orphans
 
@@ -28,7 +30,7 @@ stop-all:
 	docker stop $$(docker ps -aq)
 	
 enter:
-	docker compose exec php bash
+	docker compose exec $(PHP) bash
 
 create-project:
 	docker compose exec php composer create-project symfony/skeleton:8.0.* .
