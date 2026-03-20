@@ -6,21 +6,21 @@ services:
         volumes:
             - ./project:/app
         expose:
-            - "80"                      # ← était 443
+            - "80"
         environment:
-            SERVER_NAME: "http://:80"   # ← HTTP simple, pas HTTPS
+            SERVER_NAME: "http://:80"
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.group1.rule=Host(`group1.ehei.localhost`)"
             - "traefik.http.routers.group1.entrypoints=websecure"
             - "traefik.http.routers.group1.tls=true"
-            - "traefik.http.services.group1.loadbalancer.server.port=80"    # ← était 443
-            - "traefik.http.services.group1.loadbalancer.server.scheme=http" # ← était https
+            - "traefik.http.services.group1.loadbalancer.server.port=80"
+            - "traefik.http.services.group1.loadbalancer.server.scheme=http"
             - "traefik.docker.network=proxy-net"
 
         networks:
             - internal_network
-            - proxy-net                            # ← ajout : Traefik doit voir ce container
+            - proxy-net
 
     database:
         image: mysql
@@ -42,8 +42,16 @@ services:
             - database
         networks:
             - internal_network
+            - proxy-net
         volumes:
             - db_admin_data:/var/www/html
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.group1-pma.rule=Host(`pma.group1.ehei.localhost`)"
+            - "traefik.http.routers.group1-pma.entrypoints=websecure"
+            - "traefik.http.routers.group1-pma.tls=true"
+            - "traefik.http.services.group1-pma.loadbalancer.server.port=80"
+            - "traefik.docker.network=proxy-net"
 
 volumes:
     db_admin_data:
@@ -53,6 +61,6 @@ volumes:
 networks:
     internal_network:
         name: internal_network
-    proxy-net:                                     # ← ajout
+    proxy-net:
         name: proxy-net
         external: true
