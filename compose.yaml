@@ -1,18 +1,27 @@
 services:
-    # FrankenPHP
     franken_php:
         build:
             context: ./infra/
             dockerfile: ./frankenphp/Dockerfile
         volumes:
             - ./project:/app
-        ports:
-            - "80:80"
-            - "443:443"
+        expose:
+            - "80"                      # ← était 443
+        environment:
+            SERVER_NAME: "http://:80"   # ← HTTP simple, pas HTTPS
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.group1.rule=Host(`group1.ehei.localhost`)"
+            - "traefik.http.routers.group1.entrypoints=websecure"
+            - "traefik.http.routers.group1.tls=true"
+            - "traefik.http.services.group1.loadbalancer.server.port=80"    # ← était 443
+            - "traefik.http.services.group1.loadbalancer.server.scheme=http" # ← était https
+            - "traefik.docker.network=proxy-net"
+
         networks:
             - internal_network
+            - proxy-net                            # ← ajout : Traefik doit voir ce container
 
-    # Database server
     database:
         image: mysql
         platform: linux/x86_64
@@ -20,20 +29,15 @@ services:
         environment:
             MYSQL_ROOT_PASSWORD: secret
             MYSQL_DATABASE: app
-        ports:
-            - "33060:3306"
         volumes:
             - mysql_user:/var/lib/mysql:delegated
         networks:
             - internal_network
 
-    # PhpMyAdmin for database administration. Accessible with http://localhost:9002
     phpmyadmin:
         image: phpmyadmin/phpmyadmin:5
         environment:
             PMA_HOST: database
-        ports:
-            - "9002:80"
         depends_on:
             - database
         networks:
@@ -41,15 +45,6 @@ services:
         volumes:
             - db_admin_data:/var/www/html
 
-    # local SMTP server for emailing. The UI interface is accessible with http://localhost:1080.
-    # To send email using SMTP, use the port 1025
-    mailcatcher:
-        networks:
-            - internal_network
-        image: yappabe/mailcatcher
-        ports:
-            - '1025:1025'
-            - '1080:1080'
 volumes:
     db_admin_data:
     mysql:
@@ -58,3 +53,6 @@ volumes:
 networks:
     internal_network:
         name: internal_network
+    proxy-net:                                     # ← ajout
+        name: proxy-net
+        external: true
